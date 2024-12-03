@@ -14,7 +14,7 @@ select
 from 
 	tracks
 where 
-	duration > '03:30'
+	duration >= '00:03:30'
 order by duration;
 
 
@@ -38,7 +38,14 @@ select
 from 
 	tracks
 where 
-	lower(name) like '%my %' or lower(name) like '%мой %';
+	name ilike 'my %'
+	or name ilike '% my'
+	or name ilike '% my %'
+	or name ilike 'my'
+	or name ilike 'мой %'
+	or name ilike '% мой'
+	or name ilike '% мой %'
+	or name ilike 'мой';
 
 
 
@@ -70,16 +77,12 @@ where
 group by g.name;
 
 
-select 
-	col.name "Наименование", 
-	count(distinct (cc.trackid)) "Количество треков"
-from 
-	collection col,
-	collectconnections cc 
-where 
-	col.collectionid = cc.collectionid 
-	and release_date between '2018' and '2020'
-group by col.name;
+select  
+	count(tr.trackid) "Количество треков"
+from tracks tr
+join alboms a ON tr.albom_id = a.albomid
+where a.release_date between '2019' and '2020';
+
 
 
 select 
@@ -129,7 +132,7 @@ where
 	
 --Задание 4	
 
-select
+/*select
 	alb.name "Наименование альбома"
 from
 	alboms alb,
@@ -144,7 +147,18 @@ join genreconnections gc on a.actorid = gc.actorid
 where (select count(distinct (gc2.genresid)) from actors a2	
 		left join genreconnections gc2 on a2.actorid = gc2.actorid
 		where a2.name = a.name 
-		group by a2.name) >1);	
+		group by a2.name) >1);*/	
+	
+	
+select 
+	distinct (alb.name) "Наименование альбома"
+from 
+	alboms alb
+JOIN albomconnectors ac ON alb.albomid = ac.albomid 
+JOIN genreconnections gc ON gc.actorid = ac.actorid 
+GROUP BY alb.albomid , gc.actorid  
+HAVING COUNT(gc.genresid) > 1;
+
 
 /*Про треки которых нет в коллекциях, У меня в базе у все треки находятся в какой-то коллекции, 
 но впринципи вроде запрос должен быть такой*/	
@@ -170,7 +184,7 @@ where
 						where duration = (select min(duration) from tracks));
 
 
-select 
+/*select 
 	alb.name "Наименовнование альбома"
 from
 	tracks tr
@@ -180,4 +194,17 @@ having count(tr.albom_id) = (select min(track_count)
     						from (select count(tr2.albom_id) track_count
         							from tracks tr2
         							join alboms alb2 on tr2.albom_id = alb2.albomid 
-        							group by alb2.name) counts);
+        							group by alb2.name) counts);*/
+        							
+        						
+select 
+	alb.name "Наименовнование альбома"
+from 
+	alboms alb
+join tracks tr ON alb.albomid = tr.albom_id
+group by alb.albomid
+having count(tr.trackid) = (select count(tr1.trackid) FROM tracks tr1
+							    group by tr1.albom_id
+							    order by 1
+							    limit 1);        						
+        						
